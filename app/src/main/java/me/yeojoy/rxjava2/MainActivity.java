@@ -1,27 +1,29 @@
 package me.yeojoy.rxjava2;
 
-import android.content.Context;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.MainThreadDisposable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Cancellable;
 import io.reactivex.schedulers.Schedulers;
+import me.yeojoy.rxjava2.rx.RxBinding;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView mTextView;
+    private Button mButton;
+
+    private static int mCount = 0;
 
     private SimpleDateFormat mSimpleDateFormatter = new SimpleDateFormat("yyyy-MM-DD HH:mm:ss.SSS");
 
@@ -31,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mTextView = findViewById(R.id.text_view);
+        mButton = findViewById(R.id.button);
 
         Observable.create(getObservable())
                 .subscribeOn(Schedulers.io())
@@ -48,8 +51,41 @@ public class MainActivity extends AppCompatActivity {
                             mTextView.append("\n");
                             mTextView.append("onComplete()");
                             Log.d(TAG, "onComplete() time ::: " + mSimpleDateFormatter.format(new Date()));
+
+                            clickButton();
                         }
                 );
+
+        RxBinding.clicksThrottleFirst(mButton, this::onClickButton);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mCount = 0;
+    }
+
+    private void clickButton() {
+        Log.i(TAG, "clickButton()");
+
+        mTextView.postDelayed(() -> {
+            mButton.performClick();
+            Log.d(TAG, "click a button at " + mSimpleDateFormatter.format(new Date()));
+            mCount++;
+            if (mCount < 60) {
+                clickButton();
+            } else {
+                mCount = 0;
+            }
+        }, 50L);
+    }
+
+    private void onClickButton(View view) {
+        Log.i(TAG, "Name : " + view.getClass().getSimpleName());
+        mTextView.append("\n");
+        mTextView.append("clicked.");
+        Log.v(TAG, "clicked. " + mSimpleDateFormatter.format(new Date()));
     }
 
     private ObservableOnSubscribe<String> getObservable() {
