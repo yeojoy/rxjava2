@@ -11,11 +11,10 @@ import io.reactivex.android.MainThreadDisposable;
  */
 
 public class ViewClickOnSubscribe implements ObservableOnSubscribe<View> {
-    private static final String TAG = ViewClickOnSubscribe.class.getSimpleName();
 
     private final View mView;
 
-    public ViewClickOnSubscribe(View view) {
+    ViewClickOnSubscribe(View view) {
         mView = view;
     }
 

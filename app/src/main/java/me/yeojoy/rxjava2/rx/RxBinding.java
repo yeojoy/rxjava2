@@ -2,6 +2,7 @@ package me.yeojoy.rxjava2.rx;
 
 import android.view.View;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -33,10 +34,9 @@ public class RxBinding {
                 .subscribe(onNext);
     }
 
-//    @SafeVarargs
-//    public static Disposable mergeThrottleFirst(Consumer<View> onNext, Observable<View>... observables) {
-//        return Observable.just(observables)
-//                .throttleFirst(DEFAULT_LOCK_TIME, DEFAULT_TIME_UNIT, AndroidSchedulers.mainThread())
-//                .subscribe(onNext);
-//    }
+    public static Disposable mergeThrottleFirst(Consumer<View> onNext, List<Observable<View>> observables) {
+        return Observable.merge(observables)
+                .throttleFirst(DEFAULT_LOCK_TIME, DEFAULT_TIME_UNIT, AndroidSchedulers.mainThread())
+                .subscribe(onNext);
+    }
 }

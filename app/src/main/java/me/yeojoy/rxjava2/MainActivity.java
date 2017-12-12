@@ -8,7 +8,9 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
@@ -21,9 +23,9 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private TextView mTextView;
-    private Button mButton;
+    private Button mButton1, mButton2;
 
-    private static int mCount = 0;
+    private static int mCount1 = 0, mCount2 = 0;
 
     private SimpleDateFormat mSimpleDateFormatter = new SimpleDateFormat("yyyy-MM-DD HH:mm:ss.SSS");
 
@@ -33,7 +35,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mTextView = findViewById(R.id.text_view);
-        mButton = findViewById(R.id.button);
+        mButton1 = findViewById(R.id.button_1);
+        mButton2 = findViewById(R.id.button_2);
+
+        Log.v(TAG, "Button1 ID : " + mButton1.getId() + ", Button2 ID : " + mButton2.getId());
+        mTextView.setText("Button1 ID : " + mButton1.getId() + ", Button2 ID : " + mButton2.getId());
 
         Observable.create(getObservable())
                 .subscribeOn(Schedulers.io())
@@ -52,40 +58,66 @@ public class MainActivity extends AppCompatActivity {
                             mTextView.append("onComplete()");
                             Log.d(TAG, "onComplete() time ::: " + mSimpleDateFormatter.format(new Date()));
 
-                            clickButton();
+                            clickButton1();
+                            clickButton2();
                         }
                 );
 
-        RxBinding.clicksThrottleFirst(mButton, this::onClickButton);
+//        RxBinding.clicksThrottleFirst(mButton1, this::onClickButton);
+        List<Observable<View>> observables = new ArrayList<>();
+        observables.add(RxBinding.clicks(mButton1));
+        observables.add(RxBinding.clicks(mButton2));
+
+        RxBinding.mergeThrottleFirst(this::onClickButton, observables);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        mCount = 0;
+        mCount1 = 0;
+        mCount2 = 0;
     }
 
-    private void clickButton() {
-        Log.i(TAG, "clickButton()");
+    private void clickButton1() {
+        long time = (long) (Math.random() * 100);
+        Log.i(TAG, "clickButton1(), time : " + time);
 
-        mTextView.postDelayed(() -> {
-            mButton.performClick();
+        mButton1.postDelayed(() -> {
+            mButton1.performClick();
             Log.d(TAG, "click a button at " + mSimpleDateFormatter.format(new Date()));
-            mCount++;
-            if (mCount < 60) {
-                clickButton();
+            mCount1++;
+            if (mCount1 < 500) {
+                clickButton1();
             } else {
-                mCount = 0;
+                mCount1 = 0;
             }
-        }, 50L);
+        }, time);
+    }
+
+
+    private void clickButton2() {
+        long time = (long) (Math.random() * 100);
+        Log.i(TAG, "clickButton2(), time : " + time);
+
+        mButton2.postDelayed(() -> {
+            mButton2.performClick();
+            Log.d(TAG, "click a button at " + mSimpleDateFormatter.format(new Date()));
+            mCount2++;
+            if (mCount2 < 500) {
+                clickButton2();
+            } else {
+                mCount2 = 0;
+            }
+        }, time);
     }
 
     private void onClickButton(View view) {
-        Log.i(TAG, "Name : " + view.getClass().getSimpleName());
+        Log.i(TAG, "view id : " + view.getId());
+        String text = view.getId() + " > clicked. " + mSimpleDateFormatter.format(new Date());
         mTextView.append("\n");
-        mTextView.append("clicked.");
-        Log.v(TAG, "clicked. " + mSimpleDateFormatter.format(new Date()));
+        mTextView.append(text);
+        Log.v(TAG, text);
     }
 
     private ObservableOnSubscribe<String> getObservable() {
@@ -112,9 +144,7 @@ public class MainActivity extends AppCompatActivity {
 //            e.onError(new NullPointerException("oops! cause NullPointerException!!!"));
             e.onComplete();
 
-            e.setCancellable(() -> {
-                Log.d(TAG, "onCancel() Not mainThread. cancel time ::: " + mSimpleDateFormatter.format(new Date()));
-            });
+            e.setCancellable(() -> Log.d(TAG, "onCancel() Not mainThread. cancel time ::: " + mSimpleDateFormatter.format(new Date())));
         };
     }
 }
